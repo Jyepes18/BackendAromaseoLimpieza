@@ -126,7 +126,7 @@ public class UserService : IUserService
       }
    }
 
-   public async Task<Result<object, int>> GetUsers(int page, int pageSize)
+   public async Task<Result<object, int>> GetUsers(int page, int pageSize, UserFilter filter)
    {
       try
       {
@@ -134,7 +134,16 @@ public class UserService : IUserService
          await connection.OpenAsync();
 
          var query = @"
-            select count(1) from usuario;
+            select count(1)
+            from usuario u
+            where
+                (COALESCE(@Names, '') = '' OR u.nombres ILIKE '%' || @Names || '%')
+                AND (COALESCE(@LastNames, '') = '' OR u.apellidos ILIKE '%' || @LastNames || '%')
+                AND (COALESCE(@Email, '') = '' OR u.correo ILIKE '%' || @Email || '%')
+                AND (COALESCE(@Phone, '') = '' OR u.telefono ILIKE '%' || @Phone || '%')
+                AND (COALESCE(@Location, '') = '' OR u.ubicacion ILIKE '%' || @Location || '%')
+                AND (COALESCE(@Company, '') = '' OR u.empresa ILIKE '%' || @Company || '%')
+                AND (COALESCE(@Document, '') = '' OR u.documento ILIKE '%' || @Document || '%');
 
             select
                 u.id as Id,
@@ -146,13 +155,28 @@ public class UserService : IUserService
                 u.telefono as Phone,
                 u.ubicacion as Location
             from usuario u
-            order by id desc
+            where
+                (COALESCE(@Names, '') = '' OR u.nombres ILIKE '%' || @Names || '%')
+                AND (COALESCE(@LastNames, '') = '' OR u.apellidos ILIKE '%' || @LastNames || '%')
+                AND (COALESCE(@Email, '') = '' OR u.correo ILIKE '%' || @Email || '%')
+                AND (COALESCE(@Phone, '') = '' OR u.telefono ILIKE '%' || @Phone || '%')
+                AND (COALESCE(@Location, '') = '' OR u.ubicacion ILIKE '%' || @Location || '%')
+                AND (COALESCE(@Company, '') = '' OR u.empresa ILIKE '%' || @Company || '%')
+                AND (COALESCE(@Document, '') = '' OR u.documento ILIKE '%' || @Document || '%')
+            order by u.id desc
             OFFSET (@Page - 1) * @PageSize
             LIMIT @PageSize;
         ";
 
          var result = await connection.QueryMultipleAsync(query, new
          {
+            Names = filter.Names,
+            LastNames = filter.LastNames,
+            Email = filter.Email,
+            Phone = filter.Phone,
+            Location = filter.Location,
+            Company = filter.Company,
+            Document = filter.Document,
             Page = page,
             PageSize = pageSize
          });
@@ -172,5 +196,4 @@ public class UserService : IUserService
          throw new Exception("Error to get users", e);
       }
    }
-   
 }

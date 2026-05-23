@@ -41,9 +41,9 @@ public class UserController : ControllerBase
     
     [HttpPost]
     [Route("page/{page}/{pageSize}")]
-    public async Task<IActionResult> GetUsers([FromRoute] int page, [FromRoute] int pageSize)
+    public async Task<IActionResult> GetUsers([FromRoute] int page, [FromRoute] int pageSize, UserFilter filter)
     {
-        var result = await _userService.GetUsers(page, pageSize);
+        var result = await _userService.GetUsers(page, pageSize, filter);       
         return Ok(result);
     }
 
